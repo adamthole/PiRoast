@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js" ></script>
+    <script src="https://code.highcharts.com/highcharts.js" ></script>
+    <script src="https://code.highcharts.com/modules/exporting.js" ></script>
+
+    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+    <title>PiRoast</title>
+    <script type=text/javascript>
+
+  var _thermoTemp
+  var _targetTemp
+  var _deltaTemp
+  var _elapsedSeconds
+
+  $(function () {
+      $(document).ready(function () {
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
+        $('#container').highcharts({
+            chart: {
+                type: 'line',
+                marginRight: 10,
+                events: {
+                    load: function () {
+
+                        // set up the updating of the chart each second
+                        var series = this.series[0];
+                        var series2 = this.series[1];
+                        var series3 = this.series[2];
+
+                        setInterval(function () {
+                            var x = _elapsedSeconds,
+                                y = _thermoTemp,
+                                y2 = _targetTemp,
+                                y3 = _deltaTemp
+                            series.addPoint([x, y2], true, false, false);
+                            series2.addPoint([x, y], true, false, false);
+                            series3.addPoint([x, y3], true, false, false);
+                        }, 500);
+                    }
+                }
+            },
+            title: {
+                text: 'Thermocouple Temperature'
+            },
+            xAxis: {
+				type: 'linear',
+				labels: {
+					formatter: function() {
+						var date = new Date(null);
+						date.setSeconds(this.value);
+						return date.toISOString().substr(14, 5);
+					}
+				},
+                tickPixelInterval: 60
+            },
+            yAxis: [{
+                title: {
+                    text: 'Temperature (°F)'
+                },
+				labels: {
+					formatter: function() {
+						return this.value;
+					}
+				},
+                plotLines: [{
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+
+             { // Secondary yAxis
+        gridLineWidth: 0,
+        title: {
+            text: 'Delta T',
+            style: {
+                color: Highcharts.getOptions().colors[2]
+            }
+        },
+        labels: {
+            format: '{value} deg',
+            style: {
+                color: Highcharts.getOptions().colors[2]
+            }
+        }}],
+
+            tooltip: {
+                formatter: function () {
+					var date = new Date(null);
+					date.setSeconds(this.x);
+					var time = date.toISOString().substr(14, 5);
+
+                    return '<b>' + this.series.name + '</b><br/>' + time + '<br/>' +
+                        Highcharts.numberFormat(this.y, 0) + '°F';
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            exporting: {
+                enabled: false
+            },
+            series: [{name: 'Thermocouple Temperature'},
+                     {name: 'Target Temperature', color: '#FF0000'},
+                     {name: 'Delta Temperature', color: Highcharts.getOptions().colors[2], yAxis: 1}]
+        });
+    });
+});
+
+  setInterval(updateDisplayData, 500);
+
+  function updateDisplayData() {
+		$.getJSON('/getRoastInfo', {
+			}, function(data) {
+                secData = data.elapsedTime.split(':')
+                _elapsedSeconds = parseInt(secData[0])*60 + parseInt(secData[1])
+                _thermoTemp = data.tcTemp
+                _targetTemp = data.targetTemp
+                _deltaTemp = data.deltaTemp
+
+				$("#thermocoupleTemp").text(_thermoTemp);
+				$("#internalTemp").text(_targetTemp);
+				$("#heatOff").prop('checked', data.heatSetting == 0);
+				$("#heatLow").prop('checked', data.heatSetting == 1);
+				$("#heatMedium").prop('checked', data.heatSetting == 2);
+				$("#heatHigh").prop('checked', data.heatSetting == 3);
+				$("#fanSpeed").prop('value', data.fanSpeed);
+				$("#elapsedTime").text(data.elapsedTime);
+				$("#firstCrack").text(data.firstCrack);
+				$("#secondCrack").text(data.secondCrack);
+                $("#firstCrackTemp").text(data.firstCrackTemp);
+				$("#secondCrackTemp").text(data.secondCrackTemp);
+		});
+  }
+
+    function firstCrack() {
+	    $.get("/firstCrack");
+    }
+
+	function secondCrack() {
+		$.get("/secondCrack");
+	}
+
+	function coolRoast() {
+		$.get("/coolRoast");
+	}
+
+	function stopRoast() {
+		$.get("/stopRoast");
+	}
+
+    function startRecipe() {
+	    $.get("/recipe");
+    }
+
+	function saveRoast(name, preRoastWeight, postRoastWeight) {
+		$.get("/saveRoast/" + name + "/" + preRoastWeight + "/" + postRoastWeight);
+	}
+
+	function setHeat(heatSetting) {
+		$.get("/setHeat/" + heatSetting);
+	}
+
+	function setFanSpeed(fanSpeed) {
+		$.get("/setFanSpeed/" + fanSpeed);
+	}
+
+	function autoTemp(target) {
+		$.get("/autoTemp/" + target);
+	}
+
+	function myTimer() {
+		var d = new Date();
+		document.getElementById("demo").innerHTML = d.toLocaleTimeString();
+	}
+    </script>
+</head>
+<body>
+
+    <div data-role="page">
+        <div data-role="header">
+            <h1>PiRoast</h1>
+        </div>
+
+        Roast Name: <input type="text" size="25" id="roastName">
+        <p>
+            Pre-Roasting Weight: <input type="number" size="5" id="preRoastWeight">
+        <p>
+            Post-Roasting Weight: <input type="number" size="5" id="postRoastWeight">
+        <p>
+            Target Temperature: <span id="internalTemp">?</span>
+        <p>
+            Thermocouple Temperature: <span id="thermocoupleTemp">?</span>
+        <p>
+            <span id="elapsedTime">?</span>
+        <p>
+
+            <button onclick="coolRoast()">Cool</button>
+            <button onclick="stopRoast()">Stop</button>
+            <button onclick="startRecipe()">Run Recipe</button>
+
+            <div data-role="main" class="ui-content">
+                <label>Fan Speed:</label>
+                <input type="range" name="fanSpeed" id="fanSpeed" min="0" max="9" oninput="setFanSpeed(this.value)" onchange="setFanSpeed(this.value)">
+            </div>
+
+            <input type="radio" name="heat" onclick="setHeat(0)" id="heatOff" value="off">
+            <label>Off</label>
+            <input type="radio" name="heat" onclick="setHeat(1)" id="heatLow" value="low">
+            <label>Low</label>
+            <input type="radio" name="heat" onclick="setHeat(2)" id="heatMedium" value="medium">
+            <label>Medium</label>
+            <input type="radio" name="heat" onclick="setHeat(3)" id="heatHigh" value="high">
+            <label>High</label>
+            <br>
+            <br>
+
+            Target: <input type="number" id="targetTemp">
+            <button onclick="autoTemp(targetTemp.value)">Auto Temp</button>
+        <p>
+            <br>
+
+            <button style="width:120px;height:25px" onclick="firstCrack()">First Crack</button>
+            <span style="display:inline-block; width:50px;" id="firstCrack">?</span>
+            <span style="display:inline-block; width:50px;" id="firstCrackTemp">?</span>
+            <button style="width:120px;height:25px" onclick="secondCrack()">Second Crack</button>
+            <span style="display:inline-block; width:50px;" id="secondCrack">?</span>
+            <span style="display:inline-block; width:50px;" id="secondCrackTemp">?</span>
+        <p>
+            <br>
+
+            <button onclick="saveRoast(roastName.value, preRoastWeight.value, postRoastWeight.value)">Save Roast</button>
+            <br>
+
+            <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto" />
+    </div>
+</body>
+</html>
