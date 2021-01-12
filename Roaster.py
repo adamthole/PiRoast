@@ -158,17 +158,17 @@ class Roaster:
         cityPlus8.segments.append(RecipeSegment(425, 435, 1, 1, 2 * 60, 'Hold'))
         self.Recipes.append(cityPlus8);
 
-        fullCity13 = Recipe('Full City (13 minutes)')
-        fullCity13.segments.append(RecipeSegment(200, 250, MAX_FAN_STATE_INDEX, MAX_FAN_STATE_INDEX, 5 * 60, 'Drying', 0, 4))
-        fullCity13.segments.append(RecipeSegment(250, 435, MAX_FAN_STATE_INDEX - 1, 2, 6 * 60, 'Ramp Up'))
-        fullCity13.segments.append(RecipeSegment(435, 445, 1, 1, 2 * 60, 'Hold'))
-        self.Recipes.append(fullCity13);
-
         fullCity10 = Recipe('Full City (10 minutes)')
         fullCity10.segments.append(RecipeSegment(200, 250, MAX_FAN_STATE_INDEX, MAX_FAN_STATE_INDEX, 4 * 60, 'Drying', 0, 4))
         fullCity10.segments.append(RecipeSegment(250, 435, MAX_FAN_STATE_INDEX - 1, 2, 4 * 60, 'Ramp Up'))
         fullCity10.segments.append(RecipeSegment(435, 445, 1, 1, 2 * 60, 'Hold'))
         self.Recipes.append(fullCity10);
+        
+        fullCity13 = Recipe('Full City (13 minutes)')
+        fullCity13.segments.append(RecipeSegment(200, 250, MAX_FAN_STATE_INDEX, MAX_FAN_STATE_INDEX, 5 * 60, 'Drying', 0, 4))
+        fullCity13.segments.append(RecipeSegment(250, 435, MAX_FAN_STATE_INDEX - 1, 2, 6 * 60, 'Ramp Up'))
+        fullCity13.segments.append(RecipeSegment(435, 445, 1, 1, 2 * 60, 'Hold'))
+        self.Recipes.append(fullCity13);
 
         fullCityPlus13 = Recipe('Full City+ (13 minutes)')
         fullCityPlus13.segments.append(RecipeSegment(200, 250, MAX_FAN_STATE_INDEX, MAX_FAN_STATE_INDEX, 5 * 60, 'Drying', 0, 4))
@@ -182,8 +182,9 @@ class Roaster:
         frenchRoast12.segments.append(RecipeSegment(470, 470, 1, 1, 2 * 60, 'Hold'))
         self.Recipes.append(frenchRoast12);
 
-        self.SelectedRecipe = city9;
-
+        self.SelectedRecipe = fullCity13;
+        print(self.SelectedRecipe.name)
+        
     def connect(self, port):
         self.setFanSpeed(0)
         self.setHeat(0)
